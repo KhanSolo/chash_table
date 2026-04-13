@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "dbg_alloc.h"
+
 #define HASH_LEN 997
 
 typedef struct ht {
@@ -25,8 +27,8 @@ unsigned long djb2(const char * str) {
 
 ht* ht_new_entry(const char* key, char* value, unsigned long hash){
     ht* current = (ht*)malloc(sizeof(ht));
-    current->key = key;
-    current->value = value;
+    current->key = strdup(key);
+    current->value = strdup(value);
     current->hash = hash;
     current->next = NULL;
     return current;
@@ -39,8 +41,9 @@ void ht_add(const char* key, char* value){
     if (existing) {
         while (existing) {
             if (existing->hash == hash &&
-                strcmp(existing->key, key) == 0) { // ключи равны 
-                existing->value = value; // заменяем
+                strcmp(existing->key, key) == 0) { // ключи равны
+                free(existing->value);
+                existing->value = strdup(value); // заменяем
                 return;
             }
             if (!existing->next) {
@@ -72,9 +75,36 @@ char* ht_get(const char* key){
     return NULL;
 }
 
+void ht_free() {
+    for (int i = 0; i < HASH_LEN; ++i) {
+        ht* cur = hash_table[i];
+        while (cur) {
+            ht* tmp = cur;
+            cur = cur->next;
+            free((char*)tmp->key);
+            free(tmp->value);
+            free(tmp);
+        }
+    }
+}
+
 void ht_print_value(const char* key) {
     char* val = ht_get(key);
     printf("for %s: [%s]\n", key, val ? val : "NULL");
+}
+
+void ht_debug_print() {
+    for (int i = 0; i < HASH_LEN; i++) {
+        ht* cur = hash_table[i];
+        if (cur) {
+            printf("[%d]: ", i);
+            while (cur) {
+                printf("(%s -> %s) -> ", cur->key, cur->value);
+                cur = cur->next;
+            }
+            printf("NULL\n");
+        }
+    }
 }
 
 void ht_init() {
@@ -139,6 +169,10 @@ int main(void)
 
     ht_print_value("key");
     ht_print_value("key305");
+
+    ht_debug_print();
+
+    ht_free();
 
     return 0;
 }
