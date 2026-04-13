@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug (clang + lldb)",
+            "program": "${workspaceFolder}/build/debug/${config:outputFile}",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": false,
+            "preLaunchTask": "Build Debug (clang mingw64)"
+        }
+    ]
+}

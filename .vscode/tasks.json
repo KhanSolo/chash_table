@@ -1,0 +1,75 @@
+{
+    "version": "2.0.0",
+
+    "tasks": [
+        {
+            "label": "mkdir build (debug)",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "if not exist build\\debug mkdir build\\debug"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "Build Debug (clang mingw64)",
+            "type": "shell",
+            "command": "${config:clangPath}",
+            "args": [
+                "-g",
+                "-O0",
+                "-fno-omit-frame-pointer",
+                "-Wall",
+                "-Wextra",
+                "${config:inputFile}",
+                "-o", "build/debug/${config:outputFile}"                
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": "mkdir build (debug)",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+
+        {
+            "label": "mkdir build (release)",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "if not exist build\\release mkdir build\\release"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "label": "Build Release (clang mingw64)",
+            "type": "shell",
+            "command": "${config:clangPath}",
+            "args": [
+                "-O3",
+                "-DNDEBUG",
+                "-fno-asynchronous-unwind-tables",
+                "-ffunction-sections",
+                "-fdata-sections",
+                "-Wall",
+                "${config:inputFile}",
+                "-o", "build/release/${config:outputFile}",
+                "'-Wl,--gc-sections'"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": "mkdir build (release)",
+            "problemMatcher": "$gcc"
+        }
+    ]
+}
