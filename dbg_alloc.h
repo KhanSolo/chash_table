@@ -91,8 +91,17 @@ void dbg_report_leaks(void) {
         printf("[LEAKS] Total %d unreleased block(s).\n", leak_count);
 }
 
+char* dbg_strdup(const char* s, const char* file, int line) {
+    size_t len = strlen(s) + 1;
+    char* p = dbg_malloc(len, file, line);
+    if (p) memcpy(p, s, len);
+    return p;
+}
+
 // Возвращаем макросы для перехвата malloc/free в пользовательском коде
 #define malloc(x) dbg_malloc(x, __FILE__, __LINE__)
 #define free(x)   dbg_free(x, __FILE__, __LINE__)
+// заменяем strdup
+#define strdup(s) dbg_strdup(s, __FILE__, __LINE__)
 
 #endif // DBG_ALLOC_H

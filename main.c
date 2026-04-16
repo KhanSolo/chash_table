@@ -81,7 +81,7 @@ void ht_free() {
         while (cur) {
             ht* tmp = cur;
             cur = cur->next;
-            free((char*)tmp->key);
+            free((void*)tmp->key);
             free(tmp->value);
             free(tmp);
         }
@@ -173,6 +173,8 @@ int main(void)
     ht_debug_print();
 
     ht_free();
+
+    dbg_report_leaks();
 
     return 0;
 }
