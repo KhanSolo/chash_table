@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "dbg_alloc.h"
+//#include "dbg_alloc.h"
 
 #define HASH_LEN 997
 
@@ -27,8 +27,12 @@ unsigned long djb2(const char * str) {
 
 ht* ht_new_entry(const char* key, char* value, unsigned long hash){
     ht* current = (ht*)malloc(sizeof(ht));
-    current->key = strdup(key);
-    current->value = strdup(value);
+
+    char*dup_key = strdup(key); if(!dup_key) return NULL;
+    char*dup_val = strdup(value); if(!dup_val) return NULL;
+
+    current->key =  dup_key;
+    current->value = dup_val;
     current->hash = hash;
     current->next = NULL;
     return current;
@@ -42,12 +46,15 @@ void ht_add(const char* key, char* value){
         while (existing) {
             if (existing->hash == hash &&
                 strcmp(existing->key, key) == 0) { // ключи равны
+                char * dup_val = strdup(value);    // todo strdup can return null 
+                // todo if(!dup_val) { ... }
                 free(existing->value);
-                existing->value = strdup(value); // заменяем
+                existing->value = dup_val; // заменяем
                 return;
             }
             if (!existing->next) {
                 ht* current = ht_new_entry(key, value, hash);
+                // todo if (!current) { ... }
                 existing->next = current;
                 return;
             }
@@ -66,7 +73,8 @@ char* ht_get(const char* key){
     ht* existing = hash_table[bucket];
     if (existing) {
         while (existing) {
-            if(0 == strcmp(existing->key, key)){ // ключи равны            
+            if (existing->hash == hash &&
+                strcmp(existing->key, key) == 0) { // ключи равны          
                 return existing->value; 
             }
             existing = existing->next;
@@ -174,7 +182,7 @@ int main(void)
 
     ht_free();
 
-    dbg_report_leaks();
+    //dbg_report_leaks();
 
     return 0;
 }

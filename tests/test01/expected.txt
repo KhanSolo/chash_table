@@ -1,0 +1,17 @@
+for num1: [Hello!]
+for num2: [World!]
+for num3: [HashTable]
+for num4: [NULL]
+for num2: [Updated!]
+for apple: [fruit]
+for car: [vehicle]
+for dog: [animal]
+for key: [first]
+for key305: [second]
+[211]: (key -> first) -> (key305 -> second) -> NULL
+[278]: (num1 -> Hello!) -> NULL
+[279]: (num2 -> Updated!) -> NULL
+[280]: (num3 -> HashTable) -> NULL
+[333]: (car -> vehicle) -> NULL
+[440]: (apple -> fruit) -> NULL
+[876]: (dog -> animal) -> NULL
