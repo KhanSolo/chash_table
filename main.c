@@ -7,103 +7,119 @@
 
 #define HASH_LEN 997
 
-typedef struct ht {
-    const char * key;    
-    char * value;
+typedef struct ht_entry {
+    char *key;
+    char *value;
     unsigned long hash;
-    struct ht * next;
-} ht;
+    struct ht_entry *next;
+} ht_entry;
 
-ht * hash_table[HASH_LEN];
+typedef struct hash_table {
+    ht_entry *buckets[HASH_LEN];
+} hash_table_t;
 
 unsigned long djb2(const char * str) {
     unsigned long hash = 5381;
-    char c;
+    int c;
     while((c = *str++)) {
         hash = ((hash << 5) + hash) + c;
     }
     return hash;
 }
 
-ht* ht_new_entry(const char* key, char* value, unsigned long hash){
-    ht* current = (ht*)malloc(sizeof(ht));
+ht_entry* ht_entry_new(const char* key, const char* value, unsigned long hash) {
+    ht_entry* entry = malloc(sizeof(ht_entry));
+    if (!entry) return NULL;
 
-    char*dup_key = strdup(key); if(!dup_key) return NULL;
-    char*dup_val = strdup(value); if(!dup_val) return NULL;
+    char* dup_key = strdup(key);
+    if (!dup_key) {
+        free(entry);
+        return NULL;
+    }
 
-    current->key =  dup_key;
-    current->value = dup_val;
-    current->hash = hash;
-    current->next = NULL;
-    return current;
+    char* dup_val = strdup(value);
+    if (!dup_val) {
+        free(dup_key);
+        free(entry);
+        return NULL;
+    }
+
+    entry->key = dup_key;
+    entry->value = dup_val;
+    entry->hash = hash;
+    entry->next = NULL;
+    return entry;
 }
 
-void ht_add(const char* key, char* value){
+void ht_add(hash_table_t *ht, const char* key, const char* value) {
     unsigned long hash = djb2(key);
-    int bucket = hash % HASH_LEN;    
-    ht* existing = hash_table[bucket];
+    int bucket = hash % HASH_LEN;
+    ht_entry* existing = ht->buckets[bucket];
     if (existing) {
         while (existing) {
-            if (existing->hash == hash &&
-                strcmp(existing->key, key) == 0) { // ключи равны
-                char * dup_val = strdup(value);    // todo strdup can return null 
-                // todo if(!dup_val) { ... }
+            if (existing->hash == hash && strcmp(existing->key, key) == 0) {
+                char* dup_val = strdup(value);
+                if (!dup_val) {
+                    return;
+                }
                 free(existing->value);
-                existing->value = dup_val; // заменяем
+                existing->value = dup_val;
                 return;
             }
             if (!existing->next) {
-                ht* current = ht_new_entry(key, value, hash);
-                // todo if (!current) { ... }
-                existing->next = current;
+                ht_entry* new_entry = ht_entry_new(key, value, hash);
+                if (!new_entry) {
+                    return;
+                }
+                existing->next = new_entry;
                 return;
             }
             existing = existing->next;
         }
     } else {
-        ht* current = ht_new_entry(key, value, hash);
-        hash_table[bucket] = current;
+        ht_entry* new_entry = ht_entry_new(key, value, hash);
+        if (!new_entry) {
+            return;
+        }
+        ht->buckets[bucket] = new_entry;
     }
 }
 
-char* ht_get(const char* key){
+char* ht_get(hash_table_t *ht, const char* key) {
     unsigned long hash = djb2(key);
     int bucket = hash % HASH_LEN;
-
-    ht* existing = hash_table[bucket];
-    if (existing) {
-        while (existing) {
-            if (existing->hash == hash &&
-                strcmp(existing->key, key) == 0) { // ключи равны          
-                return existing->value; 
-            }
-            existing = existing->next;
+    ht_entry* existing = ht->buckets[bucket];
+    while (existing) {
+        if (existing->hash == hash && strcmp(existing->key, key) == 0) {
+            return existing->value;
         }
+        existing = existing->next;
     }
     return NULL;
 }
 
-void ht_free() {
+void ht_free(hash_table_t *ht) {
     for (int i = 0; i < HASH_LEN; ++i) {
-        ht* cur = hash_table[i];
+        ht_entry* cur = ht->buckets[i];
         while (cur) {
-            ht* tmp = cur;
+            ht_entry* tmp = cur;
             cur = cur->next;
-            free((void*)tmp->key);
+            free(tmp->key);
             free(tmp->value);
             free(tmp);
         }
+        ht->buckets[i] = NULL;
     }
 }
 
-void ht_print_value(const char* key) {
-    char* val = ht_get(key);
+void ht_print_value(hash_table_t *ht, const char* key) {
+    char* val = ht_get(ht, key);
     printf("for %s: [%s]\n", key, val ? val : "NULL");
 }
 
-void ht_debug_print() {
+void ht_debug_print(hash_table_t *ht) {
     for (int i = 0; i < HASH_LEN; i++) {
-        ht* cur = hash_table[i];
+        ht_entry* cur = ht->buckets[i];
         if (cur) {
             printf("[%d]: ", i);
             while (cur) {
@@ -115,10 +131,8 @@ void ht_debug_print() {
     }
 }
 
-void ht_init() {
-    // глобальная ht будет заполнена нулями
-    // если перенести в локальные переменные, то нужно заполнять
-    memset(hash_table, 0, sizeof(hash_table));
+void ht_init(hash_table_t *ht) {
+    memset(ht->buckets, 0, sizeof(ht->buckets));
 }
 
 int ht_bucket(const char* key) {
@@ -141,46 +155,47 @@ void find_collision() {
     }
 }
 
-int main(void) 
+int main(void)
 {
-    ht_init();
+    hash_table_t ht;
+    ht_init(&ht);
     
-    //find_collision(); 
+    //find_collision();
 
     // базовые вставки
-    ht_add("num1", "Hello!");
-    ht_add("num2", "World!");
-    ht_add("num3", "HashTable");
+    ht_add(&ht, "num1", "Hello!");
+    ht_add(&ht, "num2", "World!");
+    ht_add(&ht, "num3", "HashTable");
 
     // проверка получения
-    ht_print_value("num1");
-    ht_print_value("num2");
-    ht_print_value("num3");
-    ht_print_value("num4"); // не существует
+    ht_print_value(&ht, "num1");
+    ht_print_value(&ht, "num2");
+    ht_print_value(&ht, "num3");
+    ht_print_value(&ht, "num4"); // не существует
 
     // замена значения
-    ht_add("num2", "Updated!");
-    ht_print_value("num2");
+    ht_add(&ht, "num2", "Updated!");
+    ht_print_value(&ht, "num2");
 
     // добавим больше данных
-    ht_add("apple", "fruit");
-    ht_add("car", "vehicle");
-    ht_add("dog", "animal");
+    ht_add(&ht, "apple", "fruit");
+    ht_add(&ht, "car", "vehicle");
+    ht_add(&ht, "dog", "animal");
 
-    ht_print_value("apple");
-    ht_print_value("car");
-    ht_print_value("dog");    
+    ht_print_value(&ht, "apple");
+    ht_print_value(&ht, "car");
+    ht_print_value(&ht, "dog");
 
     // проверка коллизий (искусственно)
-    ht_add("key", "first");
-    ht_add("key305", "second"); // в тот же бакет при HASH_LEN 997
+    ht_add(&ht, "key", "first");
+    ht_add(&ht, "key305", "second"); // в тот же бакет при HASH_LEN 997
 
-    ht_print_value("key");
-    ht_print_value("key305");
+    ht_print_value(&ht, "key");
+    ht_print_value(&ht, "key305");
 
-    ht_debug_print();
+    ht_debug_print(&ht);
 
-    ht_free();
+    ht_free(&ht);
 
     //dbg_report_leaks();
 
