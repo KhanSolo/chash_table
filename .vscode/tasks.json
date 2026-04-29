@@ -24,7 +24,8 @@
                 "-fno-omit-frame-pointer",
                 "-Wall",
                 "-Wextra",
-                "${config:inputFile}",
+                //"${config:inputFile}", "hash_table.c",
+                "*.c",
                 "-o", "build/debug/${config:outputFile}"                
             ],
             "options": {
@@ -61,9 +62,10 @@
                 "-ffunction-sections",
                 "-fdata-sections",
                 "-Wall",
-                "${config:inputFile}",
+                //"${config:inputFile}", "hash_table.c",
+                "*.c",
                 "-o", "build/release/${config:outputFile}",
-                "'-Wl,--gc-sections'"
+                "-Wl", "--gc-sections"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

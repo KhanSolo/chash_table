@@ -1,5 +1,5 @@
 {
     "clangPath"     : "C:/msys64/mingw64/bin/clang.exe",
-    "inputFile"     : "main.c",
+    //"inputFile"     : "main.c",
     "outputFile"    : "chash_table.exe"
 }
